@@ -1,21 +1,36 @@
 import os, math, time
 import pygame
-from readbmp import *
 
-def rotatesprite (buffer,xpos,ypos,rot,q=2):
-    height = width = 64
-    rotatedsprite = pygame.surface(int(width*1.5),int(height*1.5))
-    target(rotatedsprite)
-    blitrotate (buffer,xpos,ypos,rot,q)
-    target()
-    return (rotatedsprite)
+import RPi.GPIO as GPIO         
 
-def blitrotate (buffer,xpos,ypos,rot,q=2):
-    height = width = 64
+buttons = {
+           "A":5,
+           "B":6,
+           "UP":17,
+           "DOWN":22,
+           "LEFT":27,
+           "RIGHT":23,
+           "CENTER":4
+}
+
+# setup gpio
+GPIO.setmode(GPIO.BCM)         
+for btn in buttons:
+    GPIO.setup(buttons[btn], GPIO.IN)
+
+def pressed(btn) :
+    return ( GPIO.input(buttons[btn]) != True) 
+
+def rotatesprite (image,rot,q=2):
+    width = image.get_width()
+    height = image.get_height()
+    xpos = int (width / 1.4)
+    ypos = int (height / 1.4)
+    rotatedsprite = pygame.Surface([int(width * 1.4) ,int (height * 1.4)])
     sinangle = math.sin(rot)
     cosangle = math.cos(rot)
-    h2 = height / 2
     w2 = width / 2
+    h2 = height / 2
     for x in range(0,width,q):
         for y in range(0,height,q):
             x1 = x - w2
@@ -23,42 +38,41 @@ def blitrotate (buffer,xpos,ypos,rot,q=2):
             rotx = x1 * sinangle + y1 * cosangle
             roty = y1 * sinangle - x1 * cosangle
             
-            blit(buffer,x,y,q,q,xpos + int(rotx),ypos + int(roty))
+            rotatedsprite.blit(image,(int(rotx)+xpos,int(roty)+ypos),(x,y,q,q))
+    return rotatedsprite
 
-def update(tick) :
+def update() :
         global x,y,angle
         
-        if (button(LEFT)) : x -= 1
-        if (button(RIGHT)) : x += 1
+        if (pressed("LEFT")) : x -= 1
+        if (pressed("RIGHT")) : x += 1
         
-        if (button(UP)) : y -= 1
-        if (button(DOWN)) : y += 1
+        if (pressed("UP")) : y -= 1
+        if (pressed("DOWN")) : y += 1
         
+        if (pressed("A")) : y += 1
+        if (pressed("B")) : y += 1
         angle += 0.05
 
 angle = 0
-def draw(tick) :
+def draw() :
     
         global angle,x,y,rot
-        pen(0,0,0)
-        clear()
+        screen.fill((0,0,0))
     
-        pen (15,15,15)
-        start = time.ticks_ms()
-        
         # create a new rotated sprite then blit it to screen
-        #sprite = rotatesprite(buffer,x,y,angle,2) # 68ms / 14 fps
-        #blit(sprite,0,0,96,96,0,0)
-        
-        # directly blit while rotating
-        blitrotate(buffer,x,y,angle,2) # 61ms / 16 fps
-        
+        sprite = rotatesprite(image,angle,2) 
+        screen.blit(sprite,(50 + x,50 +y))
      
-        timetaken = time.ticks_ms() - start
-        print (timetaken, "ms", (1000 // timetaken), "fps")
-        flip()
+        pygame.display.flip()
 
+screen = pygame.display.set_mode()
+pygame.mouse.set_visible(False)
 x = y = rot = 50
 texWidth = 64
-buffer = readbmp("crate.bmp")
-start()
+
+image = pygame.image.load("crate.bmp")
+
+while True:
+   update()
+   draw()

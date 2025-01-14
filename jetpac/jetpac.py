@@ -1,7 +1,6 @@
 # jetpac
 import pygame
 import time,random
-
 import RPi.GPIO as GPIO         
 
 buttons = {
@@ -13,18 +12,7 @@ buttons = {
            "RIGHT":23,
            "CENTER":4
 }
-
-# setup gpio
-GPIO.setmode(GPIO.BCM)         
-for btn in buttons:
-    GPIO.setup(buttons[btn], GPIO.IN)
-def pressed(btn) :
-    return ( GPIO.input(buttons[btn]) != True) 
-
 WIDTH = HEIGHT = 240
-screen = pygame.display.set_mode()
-pygame.mouse.set_visible(False) 
-
 
 class spriteobj:
     x = y = 0
@@ -32,7 +20,9 @@ class spriteobj:
     time = grabbed = 0
     img = [0,0]
     w = h = 16
-    
+    def __init__(self, img):
+        self.img = img
+
 def collide (obj,sprite,xdistance):
     ydistance = 10
     if (abs(sprite.x - obj.x) < xdistance  and abs(sprite.y - obj.y) < ydistance) : return True
@@ -44,54 +34,57 @@ def hitplatform (platforms,sprite):
             if ( (sprite.x > px and (sprite.x-px) < width) and (abs(py - sprite.y - 4) < 4)) : return True
     return False
 
+def getsprite(spritesheet,x,y,w,h):
+    sprite = pygame.Surface([w,h])
+    sprite.blit(spritesheet,(0,0),(x,y,w,h))
+    return sprite
+
 def blitsprite (spritesheet,sprite,mirror = 0):
      offset = 0
      if sprite.h > 8 : offset = 8  - sprite.h
-     if (mirror):
-         surface = pygame.Surface([sprite.w,sprite.h])
-         surface.blit(spritesheet,(0,0),(sprite.img[0],sprite.img[1],sprite.w,sprite.h))
-         screen.blit(pygame.transform.flip(surface,True,False),(int(sprite.x),int(sprite.y) + offset),(0,0,sprite.w,sprite.h))
-     else:
-         screen.blit(spritesheet,(int(sprite.x),int(sprite.y) + offset),(sprite.img[0],sprite.img[1],sprite.w,sprite.h))
+     image = getsprite(spritesheet,sprite.img[0],sprite.img[1],sprite.w,sprite.h)
+     screen.blit(pygame.transform.flip(image,mirror,False),(int(sprite.x),int(sprite.y) + offset),(0,0,sprite.w,sprite.h))
          
-    
 # initialize
+# setup gpio
+GPIO.setmode(GPIO.BCM)         
+for btn in buttons:
+    GPIO.setup(buttons[btn], GPIO.IN)
+def pressed(btn) :
+    return ( GPIO.input(buttons[btn]) != True) 
+
+screen = pygame.display.set_mode()
+pygame.mouse.set_visible(False) 
 spritebuffer = pygame.image.load("jetpac.png")
 
 screensize = WIDTH
 ground = HEIGHT - 10
 
-jetman = spriteobj()
-jetman.img = [36,26]
+jetman = spriteobj([36,26])
 jetman.h = 24
 
-rocket = spriteobj()
-rocket.img = [40,64]
+rocket = spriteobj([40,64])
 rocket.h = 64
 rocket.x = 140
 
-splat = spriteobj()
-splat.img = [70,0]
+splat = spriteobj([70,0])
 
-fuel = spriteobj()
+fuel = spriteobj([106,100])
 fuel.x = 50
-fuel.img = [106,100]
 fuel.w = 22
 
-gem = spriteobj()
-gem.img = [106,0]
+gem = spriteobj([106,0])
 gem.w = 20
 
 fuelled = takeoff = firing = 0
 
-aliens = [spriteobj() for i in range(4)]
+platforms = [(11,93,55), (80,122,43), (190,64,50), (0,233,240)]
+
+aliens = [spriteobj([0,50]) for i in range(4)]
 for alien in aliens :
     alien.x = random.randrange(screensize)
     alien.y = random.randrange(screensize)
-    alien.img = [0,50] 
     
-platforms = [(11,93,55), (80,122,43), (190,64,50), (0,233,240)]
-
 def update () :
     global firing,takeoff,fuelled
     
@@ -167,7 +160,7 @@ def update () :
             dead = 0
             if (alien.x > screensize or alien.x < -25) : dead = 1
             if (hitplatform(platforms,alien)) : dead = 1
-            if (firing and collide(alien,jetman,50)) : dead = 1
+            if (firing and collide(alien,jetman,100)) : dead = 1
             # player collides with alien
             if (collide(alien,jetman,10)) :
                 jetman.xdir = alien.xdir * 2
@@ -193,9 +186,10 @@ def draw () :
         blitsprite(spritebuffer,gem)    
         #laser
         if firing:
-            for laser in range(5,50):
+            for laser in range(5,100):
                 if (jetman.xdir > 0) : laser *= -1;
-                if (random.random() > 0.5) : screen.fill(15,( (int(jetman.x) - laser,int(jetman.y)),(1,1)))
+                if (random.random() > 0.3) : screen.fill((255,255,255),( (int(jetman.x) - laser,int(jetman.y)),(1,1)))
+
         for alien in aliens :
             if (alien.xdir < 0) : mirror = 1
             else : mirror = 0

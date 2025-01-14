@@ -1,2 +1,3 @@
-# pygames-arcade
-Some 80s zx spectrum games in pygame
+# picosystem
+Games and demos for the picosystem in python
+https://github.com/pimoroni/picosystem/blob/main/micropython/README.md

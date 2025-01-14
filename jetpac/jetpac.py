@@ -14,7 +14,18 @@ buttons = {
 }
 WIDTH = HEIGHT = 240
 
+BLACK = (0,0,0)
+BLUE = (0,0,255)
+RED = (255,0,0)
+MAGENTA = (255,0,255)
+GREEN = (0,255,0)
+YELLOW = (255,255,0)
+CYAN = (0,255,255)
+WHITE = (255,255,255)
+colors = (BLACK,BLUE,RED,MAGENTA,CYAN,YELLOW,WHITE)
+
 class spriteobj:
+    color = WHITE
     x = y = 0
     xdir = ydir = 0.5
     time = grabbed = 0
@@ -40,9 +51,11 @@ def getsprite(spritesheet,x,y,w,h):
     return sprite
 
 def blitsprite (spritesheet,sprite,mirror = 0):
+     r,g,b = sprite.color
      offset = 0
      if sprite.h > 8 : offset = 8  - sprite.h
      image = getsprite(spritesheet,sprite.img[0],sprite.img[1],sprite.w,sprite.h)
+     image.fill((r,g,b,255), special_flags=pygame.BLEND_RGBA_MIN)
      screen.blit(pygame.transform.flip(image,mirror,False),(int(sprite.x),int(sprite.y) + offset),(0,0,sprite.w,sprite.h))
          
 # initialize
@@ -70,6 +83,7 @@ rocket.x = 140
 splat = spriteobj([70,0])
 
 fuel = spriteobj([106,100])
+fuel.color = MAGENTA
 fuel.x = 50
 fuel.w = 22
 
@@ -84,6 +98,7 @@ aliens = [spriteobj([0,50]) for i in range(4)]
 for alien in aliens :
     alien.x = random.randrange(screensize)
     alien.y = random.randrange(screensize)
+    alien.color = RED
     
 def update () :
     global firing,takeoff,fuelled
@@ -120,7 +135,9 @@ def update () :
     if (abs(jetman.ydir) > 1) : jetman.img = [36,26]  # flying
         
     if collide(gem,jetman,10):
-            gem.img[1] = 20 * random.randrange(4) # gems at 0,10,20,30,40
+            n = random.randrange(4)
+            gem.img[1] = 20 * n # gems at 0,20,40,60,80
+            gem.color = colors[6-n]
             gem.x = random.randrange(screensize)
             gem.y = -100
             gem.ydir = 2
@@ -183,7 +200,7 @@ def draw () :
         global fuelled,takeoff
 
         screen.fill((0,0,0))
-        blitsprite(spritebuffer,gem)    
+        blitsprite(spritebuffer,gem)
         #laser
         if firing:
             for laser in range(5,100):
@@ -203,7 +220,7 @@ def draw () :
         #if (fuelled < 3) :    
             #for f in range(fuelled) :
             #    blit(spritebuffer,54,50,12,8,70,ground - (f * 8))
-        blitsprite(spritebuffer,fuel)     
+        blitsprite(spritebuffer,fuel)
         # jetman
         if (jetman.xdir > 0) : mirror = 1
         else : mirror = 0

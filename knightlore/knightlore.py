@@ -15,7 +15,7 @@ buttons = {
            "CENTER":4
 }
 WIDTH = HEIGHT = 240
-
+# zx spectrum colors
 BLACK = (0,0,0)
 BLUE = (0,0,255)
 RED = (255,0,0)
@@ -26,11 +26,12 @@ CYAN = (0,255,255)
 WHITE = (255,255,255)
 colors = (BLACK,BLUE,RED,MAGENTA,CYAN,YELLOW,WHITE)
 
-
 class spriteobj:
     color = WHITE
     flip = 0
     x = y = 0
+    jumping = 0
+    height = 0
     xdir = ydir = 0.5
     time = grabbed = 0
     img = [0,0]
@@ -51,17 +52,19 @@ def blitsprite (spritesheet,sprite,mirror = 0):
      r,g,b = sprite.color
 
      isox, isoy = iso2screen(sprite.x,sprite.y)
+     isoy -= sprite.height
      image = getsprite(spritesheet,sprite.img[0],sprite.img[1],sprite.w,sprite.h)
      image.fill((r,g,b,255), special_flags=pygame.BLEND_RGBA_MIN)
      screen.blit(pygame.transform.flip(image,mirror,False),(isox,isoy),(0,0,sprite.w,sprite.h))
     
+def pressed(btn) :
+    return ( GPIO.input(buttons[btn]) != True) 
+
 # initialize
 # setup gpio
 GPIO.setmode(GPIO.BCM)         
 for btn in buttons:
     GPIO.setup(buttons[btn], GPIO.IN)
-def pressed(btn) :
-    return ( GPIO.input(buttons[btn]) != True) 
 
 screen = pygame.display.set_mode()
 pygame.mouse.set_visible(False) 
@@ -77,12 +80,11 @@ man = 0
 def update () :
     global firing,wolf,man
     
-    if (pressed("A")) : firing  = 1
-    else : firing = 0
+    if (pressed("A") and sabreman.jumping == 0 ):
+       sabreman.jumping = 30
     
-    if (pressed("A")) : man = 65 - man
-    
-    wolfimg = 64
+    # change to a wolf
+    #if (wolf) : man += 64
     
     speed = 0.05
     if (pressed("DOWN")):
@@ -102,7 +104,7 @@ def update () :
         sabreman.img[1] = man # facing away
         sabreman.xdir -= speed
   
-    # keep on screen / wrap left/right
+    # keep on 8x8 grid
     if (sabreman.x < 0) : sabreman.x = 0 ; sabreman.xdir = 0
     if (sabreman.x > 8) : sabreman.x = 8 ; sabreman.xdir = 0
     if (sabreman.y < 0) : sabreman.y = 0 ; sabreman.ydir = 0
@@ -115,6 +117,13 @@ def update () :
     sabreman.ydir *= 0.7
 
     stopped =  speed  / 2 
+
+    if (sabreman.jumping > 0) :
+        sabreman.jumping -= 1
+        if (sabreman.jumping > 15):  sabreman.height = 30 - sabreman.jumping  
+        if (sabreman.jumping < 15): sabreman.height = sabreman.jumping
+    else: sabreman.height = 0
+        
     if (abs(sabreman.xdir) > stopped or abs(sabreman.ydir) > stopped) : ## walking
         frame = sabreman.img[0]
         if frame < 100 : frame += 24

@@ -72,7 +72,7 @@ pygame.mouse.set_visible(False)
 
 sprites = pygame.image.load("sabreman.bmp")
 backdrop = pygame.image.load("backdrop.png")
-objects = pygame.image.load("sprites.gif")
+objects = pygame.image.load("sprites.png")
 
 sabreman = spriteobj()
 sabreman.img = [0,32]
@@ -81,18 +81,23 @@ sabreman.w = 23
 themoon = spriteobj()
 themoon.img = [240,0]
 
-blocks = []
-for i in range(5):
-    block = spriteobj()
-    block.img = [290,36]
-    block.x = 2 * random.randrange(0,4)
-    block.y = 2 * random.randrange(0,4) 
-    blocks.append(block)
+def newroom():
     
+    blocks = []
+    for i in range(10):
+        block = spriteobj()
+        block.img = [290,35]
+        block.h = 24
+        block.x = 2 * random.randrange(0,5)
+        block.y = 2 * random.randrange(0,5)
+        blocks.append(block)
+    return blocks
+
 hours = 0
 moon = 0
+blocks = newroom()
 def update () :
-    global hours,moon
+    global hours,moon,blocks
     if (pressed("B") and sabreman.jumping == 0 ):
         sabreman.jumping = 30
     # change to a wolf
@@ -135,7 +140,6 @@ def update () :
     if (sabreman.y < 0) : sabreman.y = 0 ; sabreman.speed = 0
     if (sabreman.y > 9) : sabreman.y = 9 ; sabreman.speed = 0
 
-
     sabreman.x += sabreman.xdir * sabreman.speed
     sabreman.y += sabreman.ydir * sabreman.speed
 
@@ -145,41 +149,42 @@ def update () :
         if (sabreman.jumping < 15): sabreman.height = sabreman.jumping
         
     if (sabreman.speed > 0) : ## walking
-        frame = sabreman.img[0]
-        if frame < 100 : frame += 24
-        else : frame = 0
-        sabreman.img[0] = frame
+        sabreman.img[0] += 24
+        if sabreman.img[0] > 100 : sabreman.img[0] = 0
     #doors
-    doors = [[5,8],[5,0],[8,4],[0,4]]
-    
-    if round(sabreman.x) == 5 and round(sabreman.y) == 9:
-        if sabreman.ydir > 0 : sabreman.y = 0     
-    if round(sabreman.x) == 5 and round(sabreman.y) == 0: 
-        if sabreman.ydir < 0 : sabreman.y = 9
-    if round(sabreman.x) == 9 and round(sabreman.y) == 4:
-        if sabreman.xdir > 0 : sabreman.x = 0
-    if round(sabreman.x) == 0 and round(sabreman.y) == 4:
-        if sabreman.xdir < 0 : sabreman.x = 9
+    xy = [round(sabreman.x),round(sabreman.y)]    
+    if xy == [5,9] and sabreman.ydir > 0 :
+        sabreman.y = 0; blocks = newroom()
+    if xy == [5,0] and sabreman.ydir < 0 :
+        sabreman.y = 9; blocks = newroom()
+    if xy == [9,4] and sabreman.xdir > 0 :
+        sabreman.x = 0; blocks = newroom()
+    if xy == [0,4] and sabreman.xdir < 0 :
+        sabreman.x = 9; blocks = newroom()
     
     sabreman.speed = 0
     hours += 0.01
     if hours > 12 : 
         hours = 0
         moon = 1 - moon
+def depth(spr):
+    isox,isoy = iso2screen(spr.x,spr.y)
+    return isoy
 
 def draw () :
-    global hours,moon
+    global hours,moon,blocks
     screen.blit(backdrop,(0,0))
-    
+    #screen.fill((50,50,50))
     if (moon) : color = WHITE
     else : color = YELLOW
     pygame.draw.circle(screen,color,(180 + int(hours * 2) ,170), 5)
     
+    blocks.sort(key = depth)
     for block in blocks:
         blitsprite(objects,block)
     
     blitsprite(sprites,sabreman,sabreman.flip)
-        
+    
 while True:
     update()
     draw()

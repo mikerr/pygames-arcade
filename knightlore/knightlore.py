@@ -29,7 +29,7 @@ class spriteobj:
     facing  = 0
     time = grabbed = 0
     def __init__(self,newimg):
-        self.img = newimg
+        self.img = newimg[:] # make a copy, not a reference
         
 def iso2screen (x,y):
     # convert to isometric 
@@ -38,11 +38,13 @@ def iso2screen (x,y):
     return (isox,isoy)
 
 def getsprite(spritesheet,x,y,w,h):
+    # grab a portion of spritesheet as a new sprite
     sprite = pygame.Surface([w,h],flags = pygame.SRCALPHA)
     sprite.blit(spritesheet,(0,0),(x,y,w,h))
     return sprite
 
 def blitsprite (spritesheet,sprite):
+    #blit a sprite, recolored and projected o isometric
     sprite.color = roomcolor
     r,g,b = sprite.color
 
@@ -53,10 +55,12 @@ def blitsprite (spritesheet,sprite):
     screen.blit(pygame.transform.flip(image,sprite.flip,False),(isox,isoy),(0,0,sprite.w,sprite.h))
         
 def depth(spr):
+    # get depth of sprite for sorting
     isox,isoy = iso2screen(spr.x,spr.y)
     return isoy
    
 def pressed(btn) :
+    #check button presses
     #return ( GPIO.input(buttons[btn]) != True)
     key = ""
     keys = pygame.key.get_pressed()
@@ -68,6 +72,7 @@ def pressed(btn) :
     return (key == btn)
 
 def newroom():
+    # generate new room
     global sprites,roomcolor,roompic
     sprites = []
     for i in range(5):
@@ -96,6 +101,7 @@ def newroom():
     roompic.fill((r,g,b,255), special_flags=pygame.BLEND_RGBA_MIN)
     
 def update () :
+    # all game code, but no rendering
     global hours,moon
     run = 0.1
     if (pressed("B") and sabreman.jumping == 0 ):
@@ -127,10 +133,10 @@ def update () :
     sabreman.img[1] = man
  
     # keep on 8x8 grid
-    if (sabreman.x < 0) : sabreman.x = 0 ; sabreman.speed = 0
-    if (sabreman.x > 10) : sabreman.x = 10 ; sabreman.speed = 0
-    if (sabreman.y < 0) : sabreman.y = 0 ; sabreman.speed = 0
-    if (sabreman.y > 10) : sabreman.y = 10 ; sabreman.speed = 0
+    if (sabreman.x < 0 ) : sabreman.x = 0 
+    if (sabreman.x > 10) : sabreman.x = 10 
+    if (sabreman.y < 0 ) : sabreman.y = 0 
+    if (sabreman.y > 10) : sabreman.y = 10
 
     sabreman.x += sabreman.xdir * sabreman.speed
     sabreman.y += sabreman.ydir * sabreman.speed
@@ -154,6 +160,7 @@ def update () :
     if xy == [0,4] and sabreman.xdir < 0 :
         sabreman.x = 10; newroom()
     
+    #collisions
     for obj in sprites:
         if obj.name == "sabreman": continue # don't collide with yourself!
         objxy = [round(obj.x),round(obj.y)] 
@@ -163,25 +170,36 @@ def update () :
 
     if not sabreman.jumping : sabreman.speed *= 0.97
     if sabreman.speed < 0.1 :sabreman.speed = 0
+    #day / night
     hours += 0.01
     if hours > 12 : 
         hours = 0
         moon = 1 - moon
         
 def draw () :
+    # all screen rendering here
     screen.blit(roompic,(0,0))
-    #screen.fill((50,50,50))
     if (moon) : color = WHITE
     else : color = YELLOW
     pygame.draw.circle(screen,color,(180 + int(hours * 2) ,170), 5)
-      
+    
+    # blit sprites in depth order
     sprites.sort(key = depth)
     for sprite in sprites:
         if (sprite.name == "sabreman"): blitsprite(mansprites,sabreman)
         else : blitsprite(objectsprites,sprite)
-        
+    
+    #doors always in front    
     blitsprite(objectsprites,door1)
     blitsprite(objectsprites,door2)
+    
+    #collected gems
+    for i in range(0,7):
+        gem = gems[i]
+        screen.blit(objectsprites,(i * 20 ,180),(gem.img[0],gem.img[1],24,24))
+    #lives
+        screen.blit(objectsprites,( 20,145),(diamond.img[0] + 170,diamond.img[1],24,24))
+    
 # initialize
 # setup gpio
 #GPIO.setmode(GPIO.BCM)         
@@ -195,21 +213,26 @@ pygame.mouse.set_visible(False)
 mansprites = pygame.image.load("sabreman.png")
 roompic = backdrop = pygame.image.load("backdrop.png")
 objectsprites = pygame.image.load("objects.png")
-charsprites = pygame.image.load("charsprites.png")
 
 sabreman = spriteobj([0,32])
-sabreman.w = 23
+sabreman.w = 24
 sabreman.x = sabreman.y  = 7
-sabreman.facing = 32
 sabreman.name = "sabreman"
 
-table = spriteobj([80,299])
 block = spriteobj([80,9])
 spike = spriteobj([80,215])
 mine = spriteobj([127,9])
 themoon = spriteobj([240,0])
+table = spriteobj([80,299])
 chest = spriteobj([80,258])
 door = spriteobj([19,5])
+diamond = spriteobj([167,54])
+
+gems = []
+for i in range(0,7):
+    gem = spriteobj(diamond.img)
+    gem.img[0] += i * 24
+    gems.append(gem)
 
 door1 = spriteobj(door.img)
 door1.w = 40; door1.h = 50

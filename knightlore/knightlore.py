@@ -43,6 +43,14 @@ def getsprite(spritesheet,x,y,w,h):
     sprite.blit(spritesheet,(0,0),(x,y,w,h))
     return sprite
 
+def blitsprite2d (spritesheet,sprite,xy):
+    #blit a sprite, recolored 
+    r,g,b = sprite.color
+    
+    image = getsprite(spritesheet,sprite.img[0],sprite.img[1],sprite.w,sprite.h)
+    image.fill((r,g,b,255), special_flags=pygame.BLEND_RGBA_MIN)
+    screen.blit(image,xy,(0,0,sprite.w,sprite.h))
+    
 def blitsprite (spritesheet,sprite):
     #blit a sprite, recolored and projected o isometric
     sprite.color = roomcolor
@@ -171,7 +179,7 @@ def update () :
     if not sabreman.jumping : sabreman.speed *= 0.97
     if sabreman.speed < 0.1 :sabreman.speed = 0
     #day / night
-    hours += 0.01
+    hours += 0.005
     if hours > 12 : 
         hours = 0
         moon = 1 - moon
@@ -179,10 +187,11 @@ def update () :
 def draw () :
     # all screen rendering here
     screen.blit(roompic,(0,0))
-    if (moon) : color = WHITE
-    else : color = YELLOW
-    pygame.draw.circle(screen,color,(180 + int(hours * 2) ,170), 5)
-    
+    if (moon) : sky = themoon
+    else : sky = thesun
+    blitsprite2d(objectsprites,sky,(180 + int(hours * 3),175))
+    blitsprite2d(objectsprites,picframe,(175,172))
+                
     # blit sprites in depth order
     sprites.sort(key = depth)
     for sprite in sprites:
@@ -194,11 +203,11 @@ def draw () :
     blitsprite(objectsprites,door2)
     
     #collected gems
-    for i in range(0,7):
+    for i in range(0,3):
         gem = gems[i]
-        screen.blit(objectsprites,(i * 20 ,180),(gem.img[0],gem.img[1],24,24))
+        blitsprite2d(objectsprites,gem,(20 + i * 20 ,180))
     #lives
-        screen.blit(objectsprites,( 20,145),(diamond.img[0] + 170,diamond.img[1],24,24))
+    screen.blit(objectsprites,( 20,145),(diamond.img[0] + 170,diamond.img[1],24,24))
     
 # initialize
 # setup gpio
@@ -222,15 +231,22 @@ sabreman.name = "sabreman"
 block = spriteobj([80,9])
 spike = spriteobj([80,215])
 mine = spriteobj([127,9])
-themoon = spriteobj([240,0])
 table = spriteobj([80,299])
 chest = spriteobj([80,258])
 door = spriteobj([19,5])
 diamond = spriteobj([167,54])
 
+themoon = spriteobj([341,10])
+thesun = spriteobj([321,10])
+thesun.color = YELLOW
+thesun.w = 16
+picframe = spriteobj([160,85])
+picframe.w = 56
+
 gems = []
 for i in range(0,7):
     gem = spriteobj(diamond.img)
+    gem.w = gem.h = 24
     gem.img[0] += i * 24
     gems.append(gem)
 
@@ -243,9 +259,7 @@ door2.x = 9; door2.y = 3
 door2.flip = 1
     
 hours = moon = 0
-
-newroom()    
-    
+newroom()      
 while True:
     update()
     draw()

@@ -107,10 +107,11 @@ def newroom():
     r,g,b = roomcolor
     roompic = backdrop.copy()
     roompic.fill((r,g,b,255), special_flags=pygame.BLEND_RGBA_MIN)
-    
+
+frames = 0
 def update () :
     # all game code, but no rendering
-    global hours,moon
+    global hours,moon,frames
     run = 0.1
     if (pressed("B") and sabreman.jumping == 0 ):
         sabreman.jumping = 30
@@ -154,7 +155,7 @@ def update () :
         if (sabreman.jumping > 15):  sabreman.height = 30 - sabreman.jumping  
         if (sabreman.jumping < 15): sabreman.height = sabreman.jumping
         
-    if (sabreman.speed > 0) : ## walking
+    if (sabreman.speed > 0 and frames % 3  == 0) : ## walking
         sabreman.img[0] += 24
         if sabreman.img[0] > 100 : sabreman.img[0] = 0
     #doors
@@ -183,7 +184,8 @@ def update () :
     if hours > 12 : 
         hours = 0
         moon = 1 - moon
-        
+    frames += 1
+    
 def draw () :
     # all screen rendering here
     screen.blit(roompic,(0,0))
@@ -207,7 +209,8 @@ def draw () :
         gem = gems[i]
         blitsprite2d(objectsprites,gem,(20 + i * 20 ,180))
     #lives
-    screen.blit(objectsprites,( 20,145),(diamond.img[0] + 170,diamond.img[1],24,24))
+    life = gems[7]
+    blitsprite2d(objectsprites,life,(20,145))
     
 # initialize
 # setup gpio
@@ -235,16 +238,15 @@ table = spriteobj([80,299])
 chest = spriteobj([80,258])
 door = spriteobj([19,5])
 diamond = spriteobj([167,54])
-
 themoon = spriteobj([341,10])
-thesun = spriteobj([321,10])
+thesun = spriteobj([322,10])
 thesun.color = YELLOW
 thesun.w = 16
 picframe = spriteobj([160,85])
 picframe.w = 56
 
 gems = []
-for i in range(0,7):
+for i in range(0,8):
     gem = spriteobj(diamond.img)
     gem.w = gem.h = 24
     gem.img[0] += i * 24
@@ -259,7 +261,9 @@ door2.x = 9; door2.y = 3
 door2.flip = 1
     
 hours = moon = 0
-newroom()      
+
+newroom()    
+    
 while True:
     update()
     draw()

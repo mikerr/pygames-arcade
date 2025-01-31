@@ -21,14 +21,13 @@ class spriteobj:
     xdir = ydir = 1
     speed = 0
     facing  = 0
-    time = grabbed = 0
     def __init__(self,newimg):
         self.img = newimg[:] # make a copy, not a reference
         
 def iso2screen (x,y):
     # convert to isometric 
-    isox = 120 + int ( 11 * (x - y))
-    isoy = 20 + int ( 7 * (x + y ))
+    isox = 115 + int ( 12 * (x - y))
+    isoy = 30 + int ( 6 * (x + y ))
     return (isox,isoy)
 
 def getsprite(spritesheet,x,y,w,h):
@@ -47,13 +46,14 @@ def blitsprite2d (spritesheet,sprite,xy):
     
 def blitsprite (spritesheet,sprite):
     #blit a sprite, recolored and projected o isometric
-    sprite.color = roomcolor
+    if sprite.name != "sabreman":
+         sprite.color = roomcolor
     r,g,b = sprite.color
 
     #isox = 50 + sprite.x * 10
     #isoy = 50 + sprite.y * 10
     isox, isoy = iso2screen(sprite.x,sprite.y)
-    isoy -= sprite.height
+    isoy -= sprite.height 
     image = getsprite(spritesheet,sprite.img[0],sprite.img[1],sprite.w,sprite.h)
     image.fill((r,g,b,255), special_flags=pygame.BLEND_RGBA_MIN)
     screen.blit(pygame.transform.flip(image,sprite.flip,False),(isox,isoy),(0,0,sprite.w,sprite.h))
@@ -64,7 +64,9 @@ def depth(spr):
     isox,isoy = iso2screen(spr.x,spr.y)
     return isoy
 
-def collide(a,b): return (b.x - 1 <= a.x <= b.x + 1) and (b.y - 1 <= a.y <= b.y + 1)
+def collide(a,b):
+    
+    return (b.x - 0.5 <= a.x <= b.x + 0.5) and (b.y - 0.5 <= a.y <= b.y + 0.5)
 def pressed(btn) :
     #check button presses
     #return ( GPIO.input(buttons[btn]) != True)
@@ -173,15 +175,23 @@ def update () :
     for obj in sprites:
         if obj.name == "sabreman": continue # don't collide with yourself !
         
-        if collide(sabreman,obj) and obj.moveable:
-            # moveable objects
-            obj.x += sabreman.xdir * run
-            obj.y += sabreman.ydir * run
-        if collide(sabreman,obj) and not sabreman.jumping:
-            # stop 
-            sabreman.x -= sabreman.xdir * sabreman.speed
-            sabreman.y -= sabreman.ydir * sabreman.speed
+        colliding  =  collide(sabreman,obj)
+        if colliding and obj.moveable:
+                # moveable objects
+                if obj.x > 0 and obj.x < 10 : obj.x += sabreman.xdir * run
+                if obj.y > 0 and obj.y < 10 : obj.y += sabreman.ydir * run
+                continue
+        if colliding and sabreman.height == 0:
+                 sabreman.x -= sabreman.xdir * sabreman.speed
+                 sabreman.y -= sabreman.ydir * sabreman.speed    
+        if colliding and sabreman.height > 10:
+                sabreman.height = 20
+                sabreman.jumping = 0
+                sabreman.speed = 0
         
+        if sabreman.height > 15 and not colliding:
+                sabreman.jumping = 15
+            
     if not sabreman.jumping : sabreman.speed *= 0.97
     if sabreman.speed < 0.1 :sabreman.speed = 0
     #day / night
@@ -240,7 +250,7 @@ sabreman.name = "sabreman"
 
 block = spriteobj([80,2])
 spike = spriteobj([80,215])
-mine = spriteobj([127,9])
+mine = spriteobj([130,9])
 table = spriteobj([80,299])
 chest = spriteobj([80,258])
 door = spriteobj([19,5])
@@ -261,20 +271,18 @@ for i in range(0,8):
 
 door1 = spriteobj(door.img)
 door1.w = 40; door1.h = 50
-door1.x = 4; door1.y = 10
+door1.x = 4; door1.y = 9
 door2 = spriteobj(door.img)
 door2.w = 40; door2.h = 50
 door2.x = 9; door2.y = 3
 door2.flip = 1
     
 hours = moon = 0
+newroom()
 
-newroom()    
-    
 while True:
     update()
     draw()
-    
     pygame.transform.scale2x(screen, window)
     pygame.display.flip()
     pygame.time.wait(10)

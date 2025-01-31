@@ -5,14 +5,7 @@ import random
 
 buttons = { "A":5, "B":6, "UP":17, "DOWN":22, "LEFT":27, "RIGHT":23, "CENTER":4 }
 # zx spectrum colors
-BLACK = (0,0,0)
-BLUE = (0,0,255)
-RED = (255,0,0)
-MAGENTA = (255,0,255)
-GREEN = (0,255,0)
-YELLOW = (255,255,0)
-CYAN = (0,255,255)
-WHITE = (255,255,255)
+BLACK = (0,0,0); BLUE = (0,0,255); RED = (255,0,0); MAGENTA = (255,0,255); GREEN = (0,255,0); YELLOW = (255,255,0); CYAN = (0,255,255); WHITE = (255,255,255)
 colors = [BLACK,BLUE,RED,MAGENTA,GREEN,CYAN,YELLOW,WHITE]
 
 class spriteobj:
@@ -56,17 +49,20 @@ def blitsprite (spritesheet,sprite):
     sprite.color = roomcolor
     r,g,b = sprite.color
 
+    #isox = 50 + sprite.x * 10
+    #isoy = 50 + sprite.y * 10
     isox, isoy = iso2screen(sprite.x,sprite.y)
     isoy -= sprite.height
     image = getsprite(spritesheet,sprite.img[0],sprite.img[1],sprite.w,sprite.h)
     image.fill((r,g,b,255), special_flags=pygame.BLEND_RGBA_MIN)
     screen.blit(pygame.transform.flip(image,sprite.flip,False),(isox,isoy),(0,0,sprite.w,sprite.h))
-        
+    #pygame.draw.rect(screen,WHITE,(isox,isoy,10,10))    
 def depth(spr):
     # get depth of sprite for sorting
     isox,isoy = iso2screen(spr.x,spr.y)
     return isoy
-   
+
+def collide(a,b): return (b.x - 1 <= a.x <= b.x + 1) and (b.y - 1 <= a.y <= b.y + 1)
 def pressed(btn) :
     #check button presses
     #return ( GPIO.input(buttons[btn]) != True)
@@ -172,8 +168,7 @@ def update () :
     #collisions
     for obj in sprites:
         if obj.name == "sabreman": continue # don't collide with yourself!
-        objxy = [round(obj.x),round(obj.y)] 
-        if xy == objxy and not sabreman.jumping:
+        if collide(sabreman,obj) and not sabreman.jumping:
             sabreman.x -= sabreman.xdir * sabreman.speed
             sabreman.y -= sabreman.ydir * sabreman.speed
 
@@ -189,6 +184,8 @@ def update () :
 def draw () :
     # all screen rendering here
     screen.blit(roompic,(0,0))
+    #screen.fill((0,0,0))
+    
     if (moon) : sky = themoon
     else : sky = thesun
     blitsprite2d(objectsprites,sky,(180 + int(hours * 3),175))
@@ -228,10 +225,10 @@ objectsprites = pygame.image.load("objects.png")
 
 sabreman = spriteobj([0,32])
 sabreman.w = 24
-sabreman.x = sabreman.y  = 7
+sabreman.x = sabreman.y  = 3
 sabreman.name = "sabreman"
 
-block = spriteobj([80,9])
+block = spriteobj([80,2])
 spike = spriteobj([80,215])
 mine = spriteobj([127,9])
 table = spriteobj([80,299])

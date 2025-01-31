@@ -15,6 +15,7 @@ class spriteobj:
     x = y = height = 0
     img = [0,0]
     w = h = 32
+    moveable = 0
 #class player:
     jumping = 0
     xdir = ydir = 1
@@ -56,7 +57,8 @@ def blitsprite (spritesheet,sprite):
     image = getsprite(spritesheet,sprite.img[0],sprite.img[1],sprite.w,sprite.h)
     image.fill((r,g,b,255), special_flags=pygame.BLEND_RGBA_MIN)
     screen.blit(pygame.transform.flip(image,sprite.flip,False),(isox,isoy),(0,0,sprite.w,sprite.h))
-    #pygame.draw.rect(screen,WHITE,(isox,isoy,10,10))    
+    #pygame.draw.rect(screen,WHITE,(isox,isoy,10,10))
+    
 def depth(spr):
     # get depth of sprite for sorting
     isox,isoy = iso2screen(spr.x,spr.y)
@@ -91,10 +93,12 @@ def newroom():
     
     chest.x = random.randrange(3,8)
     chest.y = random.randrange(3,8)
+    chest.moveable = 1
     sprites.append(chest)
     
     table.x = random.randrange(3,8)
     table.y = random.randrange(3,8)
+    table.moveable = 1
     sprites.append(table)
     
     sprites.append(sabreman)
@@ -167,11 +171,17 @@ def update () :
     
     #collisions
     for obj in sprites:
-        if obj.name == "sabreman": continue # don't collide with yourself!
+        if obj.name == "sabreman": continue # don't collide with yourself !
+        
+        if collide(sabreman,obj) and obj.moveable:
+            # moveable objects
+            obj.x += sabreman.xdir * run
+            obj.y += sabreman.ydir * run
         if collide(sabreman,obj) and not sabreman.jumping:
+            # stop 
             sabreman.x -= sabreman.xdir * sabreman.speed
             sabreman.y -= sabreman.ydir * sabreman.speed
-
+        
     if not sabreman.jumping : sabreman.speed *= 0.97
     if sabreman.speed < 0.1 :sabreman.speed = 0
     #day / night

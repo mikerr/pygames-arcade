@@ -8,6 +8,15 @@ buttons = { "A":5, "B":6, "UP":17, "DOWN":22, "LEFT":27, "RIGHT":23, "CENTER":4 
 BLACK = (0,0,0); BLUE = (0,0,255); RED = (255,0,0); MAGENTA = (255,0,255); GREEN = (0,255,0); YELLOW = (255,255,0); CYAN = (0,255,255); WHITE = (255,255,255)
 colors = [BLACK,BLUE,RED,MAGENTA,GREEN,CYAN,YELLOW,WHITE]
 
+rooms = [
+    #"r444b400b410b420b430b401b411b421b431b402b412b422b432",
+   # "r444b130b140b210b310b221b321b251b260b351b360b430b440s431s441",
+   # "r444b330b350b530b550b331b341b351b431b441b451b531b541b551b442",
+   # "r444b330b331s332b630b631s632",
+   # "r444b330b331b332b333b430b530b540b550",
+   # "r444b210b250s211s251s410s450",
+    "r400b000b010b020b031b040b050b060b070"]
+
 class spriteobj:
     color = WHITE
     name = ""
@@ -18,7 +27,7 @@ class spriteobj:
     moveable = 0
 #class player:
     jumping = 0
-    xdir = ydir = 1
+    xdir = ydir = 0
     speed = 0
     facing  = 0
     def __init__(self,newimg):
@@ -46,14 +55,12 @@ def blitsprite2d (spritesheet,sprite,xy):
     
 def blitsprite (spritesheet,sprite):
     #blit a sprite, recolored and projected o isometric
-    if sprite.name != "sabreman":
-         sprite.color = roomcolor
     r,g,b = sprite.color
-
+    #2d
     #isox = 50 + sprite.x * 10
     #isoy = 50 + sprite.y * 10
     isox, isoy = iso2screen(sprite.x,sprite.y)
-    isoy -= sprite.height 
+    isoy -= sprite.height * 12
     image = getsprite(spritesheet,sprite.img[0],sprite.img[1],sprite.w,sprite.h)
     image.fill((r,g,b,255), special_flags=pygame.BLEND_RGBA_MIN)
     screen.blit(pygame.transform.flip(image,sprite.flip,False),(isox,isoy),(0,0,sprite.w,sprite.h))
@@ -65,7 +72,6 @@ def depth(spr):
     return isoy
 
 def collide(a,b):
-    
     return (b.x - 0.5 <= a.x <= b.x + 0.5) and (b.y - 0.5 <= a.y <= b.y + 0.5)
 def pressed(btn) :
     #check button presses
@@ -82,30 +88,36 @@ def pressed(btn) :
 def newroom():
     # generate new room
     global sprites,roomcolor,roompic
+    
+    roomcolor = colors[random.randrange(2,7)]
+    
     sprites = []
-    for i in range(5):
+    roomdesc = rooms[random.randrange(len(rooms))]
+    for i in range(4,len(roomdesc),4):
         newblock = spriteobj(block.img)
-        newblock.x = 2 * random.randrange(0,5)
-        newblock.y = 2 * random.randrange(0,5)
+        newblock.y = int(roomdesc[i+1]) + 2
+        newblock.x = int(roomdesc[i+2]) + 1
+        newblock.height = int(roomdesc[i+3])
+        newblock.color = roomcolor
         sprites.append(newblock)
         
-    mine.x = random.randrange(3,8)
-    mine.y = random.randrange(3,8)
-    sprites.append(mine)
-    
     chest.x = random.randrange(3,8)
     chest.y = random.randrange(3,8)
+    chest.color = YELLOW
     chest.moveable = 1
     sprites.append(chest)
     
     table.x = random.randrange(3,8)
     table.y = random.randrange(3,8)
+    table.color = YELLOW
     table.moveable = 1
     sprites.append(table)
     
+    sprites.append(guard)
+    
     sprites.append(sabreman)
     
-    roomcolor = colors[random.randrange(2,7)]
+    door1.color  = door2.color = roomcolor
     r,g,b = roomcolor
     roompic = backdrop.copy()
     roompic.fill((r,g,b,255), special_flags=pygame.BLEND_RGBA_MIN)
@@ -115,11 +127,13 @@ def update () :
     # all game code, but no rendering
     global hours,moon,frames
     run = 0.1
+    guardspeed = run  / 5
+    
     if (pressed("B") and sabreman.jumping == 0 ):
         sabreman.jumping = 30
         sabreman.speed = run
     # change to a wolf
-    wolf = 64
+    wolf = 65
     if (moon) : man = wolf
     else : man = 0
     
@@ -154,9 +168,10 @@ def update () :
 
     if (sabreman.jumping > 0 and sabreman.speed  > 0) :
         sabreman.jumping -= 1
-        if (sabreman.jumping > 15):  sabreman.height = 30 - sabreman.jumping  
-        if (sabreman.jumping < 15): sabreman.height = sabreman.jumping
-        
+        if (sabreman.jumping > 15): sabreman.height += 0.1 
+        if (sabreman.jumping < 15): sabreman.height -= 0.1
+    if sabreman.height  < 0 : sabreman.height  = 0
+    
     if (sabreman.speed > 0 and frames % 3  == 0) : ## walking
         sabreman.img[0] += 24
         if sabreman.img[0] > 100 : sabreman.img[0] = 0
@@ -181,19 +196,50 @@ def update () :
                 if obj.x > 0 and obj.x < 10 : obj.x += sabreman.xdir * run
                 if obj.y > 0 and obj.y < 10 : obj.y += sabreman.ydir * run
                 continue
-        if colliding and sabreman.height == 0:
-                 sabreman.x -= sabreman.xdir * sabreman.speed
-                 sabreman.y -= sabreman.ydir * sabreman.speed    
-        if colliding and sabreman.height > 10:
-                sabreman.height = 20
+            
+        #stop if hit an object at same height
+        if colliding and sabreman.height == obj.height * 1.5:
+                sabreman.x -= sabreman.xdir * sabreman.speed
+                sabreman.y -= sabreman.ydir * sabreman.speed    
+        #land on top of object
+        if sabreman.jumping > 25 and colliding and (sabreman.height) > obj.height:
+                sabreman.height = obj.height + 1.5
                 sabreman.jumping = 0
                 sabreman.speed = 0
+                break
+    colliding = 0
+    for obj in sprites:
+        if obj.name == "sabreman": continue # don't collide with yourself !
         
-        if sabreman.height > 15 and not colliding:
-                sabreman.jumping = 15
-            
+        colliding  =  collide(sabreman,obj)
+        if colliding : break
+        
+        #fall off end if not coliided with anything
+    if sabreman.height >= 1.5 and not colliding:
+            sabreman.jumping = 15
+    
     if not sabreman.jumping : sabreman.speed *= 0.97
-    if sabreman.speed < 0.1 :sabreman.speed = 0
+    if sabreman.speed < 0.07 :sabreman.speed = 0
+    
+    #guard
+    guard.x += guard.xdir
+    guard.y += guard.ydir
+    if guard.x <= 0 :
+        guard.xdir = 0
+        guard.ydir = guardspeed
+    if guard.x > 10:
+        guard.x = 10
+        guard.xdir = 0
+        guard.ydir = -guardspeed
+    if guard.y > 10:
+        guard.y = 10
+        guard.ydir = 0
+        guard.xdir = guardspeed
+    if guard.y < 0:
+        guard.y = 0
+        guard.ydir = 0
+        guard.xdir = -guardspeed
+        
     #day / night
     hours += 0.005
     if hours > 12 : 
@@ -214,7 +260,8 @@ def draw () :
     # blit sprites in depth order
     sprites.sort(key = depth)
     for sprite in sprites:
-        if (sprite.name == "sabreman"): blitsprite(mansprites,sabreman)
+        if (sprite.name == "sabreman" or sprite.name == "guard"):
+            blitsprite(mansprites,sprite)
         else : blitsprite(objectsprites,sprite)
     
     #doors always in front    
@@ -247,6 +294,10 @@ sabreman = spriteobj([0,32])
 sabreman.w = 24
 sabreman.x = sabreman.y  = 3
 sabreman.name = "sabreman"
+
+guard = spriteobj([0,132])
+guard.w = 24
+guard.name = "guard"
 
 block = spriteobj([80,2])
 spike = spriteobj([80,215])

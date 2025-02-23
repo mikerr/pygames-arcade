@@ -127,7 +127,7 @@ def update () :
     # all game code, but no rendering
     global hours,moon,frames
     run = 0.1
-    guardspeed = run  / 5
+    guardspeed = run  / 6
     
     if (pressed("B") and sabreman.jumping == 0 ):
         sabreman.jumping = 30
@@ -227,18 +227,29 @@ def update () :
     if guard.x <= 0 :
         guard.xdir = 0
         guard.ydir = guardspeed
+        guard.flip = 1
+        guard.img[1] = 166
     if guard.x > 10:
         guard.x = 10
         guard.xdir = 0
         guard.ydir = -guardspeed
+        guard.flip = 1
+        guard.img[1] = 132
     if guard.y > 10:
         guard.y = 10
         guard.ydir = 0
         guard.xdir = guardspeed
+        guard.flip = 0
+        guard.img[1] = 166
     if guard.y < 0:
         guard.y = 0
         guard.ydir = 0
         guard.xdir = -guardspeed
+        guard.flip = 0
+        guard.img[1] = 132
+    if (frames % 8  == 0):
+        guard.img[0] += 24
+        if guard.img[0] > 100 : guard.img[0] = 0
         
     #day / night
     hours += 0.005
@@ -287,7 +298,7 @@ screen = pygame.Surface((240, 240))
 pygame.mouse.set_visible(False) 
 
 mansprites = pygame.image.load("sabreman.png")
-roompic = backdrop = pygame.image.load("backdrop.png")
+roompic = backdrop = pygame.image.load("rooms.png")
 objectsprites = pygame.image.load("objects.png")
 
 sabreman = spriteobj([0,32])

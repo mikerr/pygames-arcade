@@ -1,6 +1,8 @@
 import os, math, time
-from readbmp import *
+import pygame
 
+def button(btn):
+	return 0
 def rot3d (point,rotate) :
     x,y,z = point
     rx,ry,rz = rotate
@@ -100,7 +102,7 @@ def texline ( p1, p2, y) :
     x = 0
     for p in linepoints :
         px,py = p
-        blit(buffer,int(x),int(y),2,2,px,py)
+        screen.blit(image,(x,y),(px,py,2,2))
         x += step
     
 def texquad( t1, t2, t3, t4) :
@@ -147,27 +149,23 @@ def init() :
             [2, 6, 7],
             [2, 7, 3]]
          
-def update(tick) :
+def update() :
         global x,y,angle
         
-        if (button(LEFT)) : x -= 1
-        if (button(RIGHT)) : x += 1
+        if (button("LEFT")) : x -= 1
+        if (button("RIGHT")) : x += 1
         
-        if (button(UP)) : y -= 1
-        if (button(DOWN)) : y += 1
+        if (button("UP")) : y -= 1
+        if (button("DOWN")) : y += 1
         
         angle += 0.05
 
 angle = 0
-def draw(tick) :
+def draw() :
     
         global angle,x,y,rot
-        pen(0,0,0)
-        clear()
         
-        pen (15,15,15)
-        start = time.ticks_ms()
-
+        screen.fill((0,0,0))
         i = 0
         for face in faces:
             triangle = []
@@ -195,11 +193,15 @@ def draw(tick) :
                 #poly(tuple(t2),tuple(oldt2),tuple(t1),tuple(t3))
             oldt2 = t2            
             i += 1
-        timetaken = time.ticks_ms() - start
-        print (timetaken, "ms", (1000 // timetaken), "fps")
-        flip()
+        pygame.display.flip()
+
 init()
 x = y = rot = 60
-texWidth = 64
-buffer = readbmp("crate.bmp")
-start()
+image = pygame.image.load("crate.bmp")
+texWidth = image.get_width()
+
+screen = pygame.display.set_mode()
+while True:
+	draw()
+	update()
+	time.sleep(0.1)

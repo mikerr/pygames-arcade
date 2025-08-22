@@ -7,7 +7,6 @@
 
 import time, math
 import pygame
-import RPi.GPIO as GPIO         
 
 buttons = {
            "A":5,
@@ -19,17 +18,12 @@ buttons = {
            "CENTER":4
 }
 
-# setup gpio
-GPIO.setmode(GPIO.BCM)         
-for btn in buttons:
-    GPIO.setup(buttons[btn], GPIO.IN)
-
-def pressed(btn) :
-    return ( GPIO.input(buttons[btn]) != True) 
-
 WIDTH = HEIGHT = 240
 
 screen = pygame.display.set_mode()
+
+def pressed (key):
+	return 0
 
 def mandel(i,res) :
     max_iter = 255  // res

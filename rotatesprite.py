@@ -1,7 +1,6 @@
 import os, math, time
 import pygame
 
-import RPi.GPIO as GPIO         
 
 buttons = {
            "A":5,
@@ -13,13 +12,9 @@ buttons = {
            "CENTER":4
 }
 
-# setup gpio
-GPIO.setmode(GPIO.BCM)         
-for btn in buttons:
-    GPIO.setup(buttons[btn], GPIO.IN)
 
 def pressed(btn) :
-    return ( GPIO.input(buttons[btn]) != True) 
+    return 0
 
 def rotatesprite (image,rot,q=2):
     width = image.get_width()
@@ -76,3 +71,4 @@ image = pygame.image.load("crate.bmp")
 while True:
    update()
    draw()
+   time.sleep(0.1)

@@ -1,7 +1,6 @@
 # jetpac
 import pygame
 import time,random
-import RPi.GPIO as GPIO         
 
 buttons = {
            "A":5,
@@ -59,12 +58,15 @@ def blitsprite (spritesheet,sprite,mirror = 0):
      screen.blit(pygame.transform.flip(image,mirror,False),(int(sprite.x),int(sprite.y) + offset),(0,0,sprite.w,sprite.h))
          
 # initialize
-# setup gpio
-GPIO.setmode(GPIO.BCM)         
-for btn in buttons:
-    GPIO.setup(buttons[btn], GPIO.IN)
 def pressed(btn) :
-    return ( GPIO.input(buttons[btn]) != True) 
+    key = ""
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_LEFT]: key = "LEFT"
+    if keys[pygame.K_RIGHT]: key = "RIGHT"
+    if keys[pygame.K_UP]: key = "UP"
+    if keys[pygame.K_DOWN]: key = "DOWN"
+    if keys[pygame.K_SPACE]: key = "A"
+    return ( key == btn )
 
 screen = pygame.display.set_mode()
 pygame.mouse.set_visible(False) 
@@ -229,8 +231,9 @@ def draw () :
         for p in platforms:
             px,py,width = p
             pygame.draw.line(screen,(0,128,0),(px, py), (px + width,py),5)
+
 while True:
     update()
     draw()
-    pygame.display.update()
+    pygame.display.flip()
     pygame.time.wait(20)

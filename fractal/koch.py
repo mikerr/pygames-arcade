@@ -6,7 +6,7 @@ import math,random,time
 
 pygame.init()
 
-surface = pygame.display.set_mode((640, 480))
+surface = pygame.display.set_mode((900, 900))
 WHITE = 65535
  
 def drawangle(linestart,angle,length):
@@ -41,13 +41,12 @@ def koch (linestart,angle,length,order):
 recursion  = 0
 
 angle = 0
-linestart = (700,400)
+linestart = (650,100)
 
 while True:
     for ev in pygame.event.get():
         if ev.type == QUIT:
             pygame.quit()
-     # surface.fill(0)
     
     linestart = koch(linestart,angle,700,recursion)
     
@@ -61,3 +60,5 @@ while True:
     	time.sleep(1)
     	recursion = recursion + 1
     	surface.fill(0)
+    	
+    if recursion > 6 : recursion = 0	

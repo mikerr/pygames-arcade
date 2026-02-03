@@ -1,11 +1,11 @@
 # julia
 
-import math,time
+import sys,math,time
 import pygame
 from pygame.locals import *
 
 pygame.init()
-surface = pygame.display.set_mode((640, 480))
+surface = pygame.display.set_mode((900, 900))
 
 w= WIDTH = 900
 h = HEIGHT = 900
@@ -33,22 +33,20 @@ def colorpixel(x,y,c):
     pygame.draw.rect(surface,pen,(x,y,res,res))
     
 scale = 1./384
-cx = -0.55
-cy = 0.42
+cx = -0.45
+cy = 0.56
 
-clr= [int(i**7) for i in range(255,-1,-1)]
+clr= [int(i**3) for i in range(255,-1,-1)]
 
 invertcolors = 1
 
-res = 3
+res = 1
 for r in range(70):
     julia(1)
     pygame.display.flip()
-    cy += 0.005
-    
-for r in range(80):
-    julia(1)
-    pygame.display.flip()
-    cy -= 0.005
-    
-time.sleep(1)
+    cy += 0.001
+    for events in pygame.event.get():
+        if events.type == pygame.QUIT:
+            sys.exit(0)
+            break
+          

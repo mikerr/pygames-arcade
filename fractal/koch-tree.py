@@ -1,7 +1,7 @@
 
 import pygame
 from pygame.locals import *
-import math,random
+import math,random,time
 
 pygame.init()
 # Resolution is ignored on Android
@@ -31,12 +31,10 @@ def koch (linestart,angle,length,order):
   
         pygame.draw.lines(surface, 53335,0,points)     
         koch(line,angle,length,order - 1)
-    else:
-         print("hello")
+        
     return line
     
-    
-linestart = (100,300)
+linestart = (300,0)
 
 angle = 0
 
@@ -50,3 +48,5 @@ while True:
     pygame.display.flip()
     
     angle = angle - random.randrange(-45,45)
+    
+    time.sleep(1)
